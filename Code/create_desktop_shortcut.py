@@ -5,7 +5,7 @@ import sys
 
 def update_desktop_file():
     """
-    Directly create desktop shortcut file on user desktop
+    Directly create desktop shortcut file on user desktop and autostart.
     """
     try:
         # Get the directory where the current script is located
@@ -21,7 +21,7 @@ def update_desktop_file():
         if not os.path.exists(icon_path):
             raise FileNotFoundError(f"Icon file {icon_path} does not exist")
         
-        # Get home directory path and build target path
+        # Get home directory path and build target paths
         try:
             username = os.getlogin()
             home_dir = os.path.expanduser(f"~{username}")
@@ -31,6 +31,7 @@ def update_desktop_file():
             print("Warning: Unable to get current username, using default path /home/pi")
         
         desktop_dir = os.path.join(home_dir, "Desktop")
+        autostart_dir = os.path.join(home_dir, ".config", "autostart")
         
         # Ensure desktop directory exists
         if not os.path.exists(desktop_dir):
@@ -40,6 +41,14 @@ def update_desktop_file():
             except Exception as e:
                 raise Exception(f"Failed to create desktop directory: {e}")
         
+        # Ensure autostart directory exists
+        if not os.path.exists(autostart_dir):
+            try:
+                os.makedirs(autostart_dir, mode=0o755, exist_ok=True)
+                print(f"Created autostart directory: {autostart_dir}")
+            except Exception as e:
+                raise Exception(f"Failed to create autostart directory: {e}")
+        
         # Check if desktop directory is valid and writable
         if not os.path.isdir(desktop_dir):
             raise Exception(f"Desktop directory {desktop_dir} is not a valid directory")
@@ -47,43 +56,81 @@ def update_desktop_file():
         if not os.access(desktop_dir, os.W_OK):
             raise Exception(f"Desktop directory {desktop_dir} does not have write permission")
         
-        # Build destination file path
-        destination_path = os.path.join(desktop_dir, "Freenove.desktop")
+        # Check if autostart directory is valid and writable
+        if not os.path.isdir(autostart_dir):
+            raise Exception(f"Autostart directory {autostart_dir} is not a valid directory")
         
-        # If destination file exists, delete it
-        if os.path.exists(destination_path):
+        if not os.access(autostart_dir, os.W_OK):
+            raise Exception(f"Autostart directory {autostart_dir} does not have write permission")
+        
+        # Build destination file paths
+        desktop_path = os.path.join(desktop_dir, "My_Raspi.desktop")
+        autostart_path = os.path.join(autostart_dir, "My_Raspi.desktop")
+        
+        # If desktop file exists, delete it
+        if os.path.exists(desktop_path):
             try:
-                os.remove(destination_path)
-                print(f"Deleted existing desktop file: {destination_path}")
+                os.remove(desktop_path)
+                print(f"Deleted existing desktop file: {desktop_path}")
             except Exception as e:
                 raise Exception(f"Failed to delete existing desktop file: {e}")
+        
+        # If autostart file exists, delete it
+        if os.path.exists(autostart_path):
+            try:
+                os.remove(autostart_path)
+                print(f"Deleted existing autostart file: {autostart_path}")
+            except Exception as e:
+                raise Exception(f"Failed to delete existing autostart file: {e}")
 
-        # Create desktop file content directly on desktop
+        # Create desktop file content for desktop
         desktop_content = f"""[Desktop Entry]
 Version=1.0
 Type=Application
-Name=Freenove Computer Case
-Comment=Freenove Computer Case Kit Pro for Raspberry Pi
+Name=My_Raspi
+Comment=My_Raspi Case Kit for Raspberry Pi
 Exec=bash {run_script_path}
 Icon={icon_path}
 Terminal=false
 Categories=Application;Development;
 """
         
-        # Write desktop file directly to desktop
+        # Create desktop file content for autostart
+        autostart_content = f"""[Desktop Entry]
+Version=1.0
+Type=Application
+Name=My_Raspi autostart
+Comment=My_Raspi Case Kit for Raspberry Pi
+Exec=bash {run_script_path}
+Icon={icon_path}
+Terminal=false
+Categories=Application;Development;
+X-GNOME-Autostart-enabled=true
+"""
+        
+        # Write desktop file to desktop
         try:
-            with open(destination_path, 'w', encoding='utf-8') as f:
+            with open(desktop_path, 'w', encoding='utf-8') as f:
                 f.write(desktop_content)
-            print("Created new desktop file directly on desktop")
+            print("Created new desktop file in ~/Desktop")
         except Exception as e:
             raise Exception(f"Error creating desktop file: {e}")
         
-        # Set file as executable
+        # Write desktop file to autostart
         try:
-            os.chmod(destination_path, 0o755)
+            with open(autostart_path, 'w', encoding='utf-8') as f:
+                f.write(autostart_content)
+            print("Created new autostart file in ~/.config/autostart")
+        except Exception as e:
+            raise Exception(f"Error creating autostart file: {e}")
+        
+        # Set files as executable
+        try:
+            os.chmod(desktop_path, 0o755)
+            os.chmod(autostart_path, 0o755)
             # Also make the run_app.sh script executable
             os.chmod(run_script_path, 0o755)
-            print("Desktop file and script set as executable")
+            print("Desktop and autostart files set as executable")
         except Exception as e:
             raise Exception(f"Error setting file permissions: {e}")
         
@@ -118,8 +165,8 @@ Categories=Application;Development;
 if __name__ == "__main__":
     success = update_desktop_file()
     if success:
-        print("Desktop shortcut created successfully!")
+        print("Desktop and autostart shortcuts created successfully!")
         sys.exit(0)
     else:
-        print("Desktop shortcut creation failed!")
+        print("Shortcut creation failed!")
         sys.exit(1)

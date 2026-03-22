@@ -8,12 +8,13 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QTabWidget
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QPalette, QColor
 
+from app_ui_test import TestTab                      # Import test interface
 from app_ui_monitor import MonitoringTab             # Import monitoring interface
 from app_ui_led import LedTab                        # Import LED interface
 from app_ui_fan import FanTab                        # Import fan control interface
 from app_ui_oled import OledTab                      # Import OLED interface
 from app_ui_setting import SettingTab                # Import settings interface
-
+from app_ui_test import TestTab                      # Import test interface
 from api_json import ConfigManager                   # Import configuration management module
 from api_expansion import Expansion                  # Import expansion module
 from api_systemInfo import SystemInformation         # Import system information module
@@ -26,7 +27,7 @@ class MainWindow(QMainWindow):
         self.ui_main_width = width
         self.ui_main_height = height
         self.ui_fan_temp_mode_threshold_range = [[10, 40], [50, 80], [1, 5]]     # Fan temperature mode threshold range
-        self.setWindowTitle("Freenove_Computer_Case_Kit_Pro_for_Raspberry_Pi")   # Set window title
+        self.setWindowTitle("My Raspi")   # Set window title
         self.setGeometry(0, 0, self.ui_main_width, self.ui_main_height)          # Set window size
         self.setMinimumSize(round(self.ui_main_width*self.ui_factor), round(self.ui_main_height*self.ui_factor))  # Set minimum size
 
@@ -62,6 +63,7 @@ class MainWindow(QMainWindow):
         self.led_tab = None                                          # Create LED interface object
         self.fan_tab = None                                          # Create fan control interface object
         self.setting_tab = None                                      # Create settings interface object
+        self.test_tab = None                                    
 
         self.monitor_update_data_timer = QTimer(self)                # Create monitor interface data update timer
         self.monitor_update_data_timer_is_running = True             # Whether timer is running
@@ -117,12 +119,18 @@ class MainWindow(QMainWindow):
         self.setting_tab = SettingTab(self.width(), self.height())
         self.setting_tab.setFocusPolicy(Qt.NoFocus)
 
+        self.test_tab = TestTab(self.width(), self.height())
+        self.test_tab.setFocusPolicy(Qt.NoFocus)
+
         # Add tab to tab widget
+        
         self.tab_widget.addTab(self.monitoring_tab, "Monitor")
         self.tab_widget.addTab(self.led_tab, "LED")
         self.tab_widget.addTab(self.fan_tab, "Fan")
         self.tab_widget.addTab(self.oled_tab, "OLED")
         self.tab_widget.addTab(self.setting_tab, "Settings")
+        self.tab_widget.addTab(self.test_tab, "Debug")
+        
         self.tab_widget.setStyleSheet("""
             QTabWidget::pane {
                 border: 1px solid #333333;
